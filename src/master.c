@@ -8,12 +8,12 @@
 Hook executor_start_hook = NULL;
 
 int main(void) {
-    if (create_config_table() != 0) {
+    if (create_config_table()) {
         fprintf(stderr, "Failed to initialize the config\n");
         return 1;
     }
 
-    if (init_logger("path", 0) != 0) {
+    if (init_logger("path", 0)) {
         fprintf(stderr, "Failed to initialize the logger\n");
         return 1;
     }
@@ -62,7 +62,7 @@ int main(void) {
     if (executor_start_hook) {
         executor_start_hook();
     } else {
-        fprintf(stderr, "executor_start_hook is not connected!\n");
+        fprintf(stderr, "executor_start_hook не подключен!\n");
     }
 
     fini();
@@ -73,12 +73,12 @@ int main(void) {
         fprintf(stderr, "executor_start_hook отключен\n");
     }
 
-    if (destroy_config_table() != 0) {
+    if (destroy_config_table()) {
         fprintf(stderr, "Couldn't shut down config\n");
         return 1;
     }
 
-    if (fini_logger() != 0) {
+    if (fini_logger()) {
         fprintf(stderr, "Couldn't shut down logger\n");
         return 1;
     }
