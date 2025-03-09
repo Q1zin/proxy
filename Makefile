@@ -48,8 +48,8 @@ $(STATIC_LIB): $(BUILD_DIR)/config.o $(BUILD_DIR)/master.o
 $(GREETING_PLUGIN_DIR)/greeting.so: plugins/greeting/greeting.c | $(GREETING_PLUGIN_DIR)
 	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared -Wl,-undefined,dynamic_lookup $< -o $@
 
-$(BUILD_DIR)/liblogger.so: src/logger.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $< -o $@
+$(BUILD_DIR)/liblogger.so: src/logger.c src/my_time.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $^ -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
