@@ -42,8 +42,10 @@ char* get_utc(char* buffer, size_t buffer_size) {
     return buffer;
 }
 
+// "TIME(UTC) FILE LINE [PID] | LEVEL: MESSAGE"
 int write_log(enum OutputStream stream, enum LogLevel level, char* filename, int line_number, char* format, ...) {
-    // "TIME(UTC) FILE LINE [PID] | LEVEL: MESSAGE"
+    const char* level_str = (level >= LOG_DEBUG && level <= LOG_FATAL) ? level_names[level] : "UNKNOWN";
+
     char time_buffer[32];
     get_utc(time_buffer, sizeof(time_buffer));
 
@@ -53,14 +55,13 @@ int write_log(enum OutputStream stream, enum LogLevel level, char* filename, int
     va_start(args, format);
 
     if (stream == STDOUT) {
-        printf("%s %s %d [%d] | %d: ", time_buffer, filename, line_number, pid, level);
+        printf("%s %s %d [%d] | %s: ", time_buffer, filename, line_number, pid, level_str);
         vprintf(format, args);
         printf("\n");
     } else if (stream == FILESTREAM && __log_file_path != NULL) {
         int fd = open(__log_file_path, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
         if (fd == -1) {
-            fprintf(stderr, "Failed to open log file\n");
-            fprintf(stderr, "%s %s %d [%d] | %d: ", time_buffer, filename, line_number, pid, level);
+            fprintf(stderr, "%s %s %d [%d] | %s: ", time_buffer, filename, line_number, pid, level_str);
             vfprintf(stderr, format, args);
             fprintf(stderr, "\n");
             va_end(args);
@@ -78,12 +79,12 @@ int write_log(enum OutputStream stream, enum LogLevel level, char* filename, int
             lseek(fd, 0, SEEK_SET);
         }
 
-        dprintf(fd, "%s %s %d [%d] | %d: ", time_buffer, filename, line_number, pid, level);
+        dprintf(fd, "%s %s %d [%d] | %s: ", time_buffer, filename, line_number, pid, level_str);
         dprintf(fd, "%s\n", buffer);
 
         close(fd);
     } else {
-        fprintf(stderr, "%s %s %d [%d] | %d: ", time_buffer, filename, line_number, pid, level);
+        fprintf(stderr, "%s %s %d [%d] | %s: ", time_buffer, filename, line_number, pid, level_str);
         vfprintf(stderr, format, args);
         fprintf(stderr, "\n");
     }

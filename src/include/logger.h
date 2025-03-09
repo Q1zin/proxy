@@ -19,6 +19,15 @@ enum OutputStream {
     FILESTREAM
 };
 
+const char* level_names[] = {
+    "UNKNOWN",
+    "LOG_DEBUG",
+    "LOG_INFO",
+    "LOG_WARNING",
+    "LOG_ERROR",
+    "LOG_FATAL"
+};
+
 int write_log(enum OutputStream stream, enum LogLevel level, char* filename, int line_number, char* format, ...);
 
 #endif
