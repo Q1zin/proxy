@@ -20,19 +20,21 @@ int plugs_count = 0;
 static int priorities[MAX_VARIABLES];
 
 int create_config_table(void) {
-    if (__init_count_config++) {
+    if (__init_count_config > 0) {
         fprintf(stderr, "Config connected again\n");
         return 1;
     }
+    __init_count_config = 1;
     fprintf(stderr, "Config connected\n");
     return 0;
 }
 
 int destroy_config_table(void) {
-    if (!__init_count_config--) {
+    if (__init_count_config < 0) {
         fprintf(stderr, "Config disconnected again\n");
         return 1;
     }
+    __init_count_config = -1;
     fprintf(stderr, "Config disconnected\n");
     return 0;
 }

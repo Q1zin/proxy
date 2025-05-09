@@ -53,4 +53,6 @@ bool does_variable_exist(const char* name);
 
 void parse_list(char *value, char **list, int *count);
 
+int parse_config_with_priority(const char *path, int priority);
+
 #endif
