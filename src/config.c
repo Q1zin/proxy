@@ -5,6 +5,7 @@
 #include <dlfcn.h>
 #include <dirent.h>
 #include <limits.h>
+#include <errno.h>
 #include "include/config.h"
 #include "include/logger.h"
 
@@ -150,13 +151,20 @@ void parse_list(char *value, char **list, int *count) {
 }
 
 void process_include_dir(const char *current_path, const char *dir_path, int priority) {
-    DIR *dir = opendir(dir_path);
-    if (!dir) return;
+    char resolved_path[PATH_MAX];
+    if (realpath(dir_path, resolved_path) == NULL) {
+        write_log(FILESTREAM, LOG_ERROR, __FILE__, __LINE__, "Failed to resolve path: %s - %s\n", dir_path, strerror(errno));
+        return;
+    }
 
+    DIR *dir = opendir(resolved_path);
+    if (!dir) {
+        write_log(FILESTREAM, LOG_ERROR, __FILE__, __LINE__, "Opendir failed: %s. Path: \n", strerror(errno), resolved_path);
+        return;
+    }
     struct dirent *entry;
     char *filenames[MAX_TOKENS];
     int count = 0;
-
     while ((entry = readdir(dir))) {
         if (entry->d_type != DT_REG) continue;
         if (strcmp(entry->d_name, current_path) == 0) continue;
