@@ -1,9 +1,9 @@
 PROXY_BASE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 CC ?= gcc
-CCFLAGS ?=
+CCFLAGS ?= 
 CFLAGS ?= -Wall -Wextra -Wpedantic -Wpointer-arith -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough -Wcast-function-type -Wshadow -Wformat-security $(CCFLAGS)
-COPT ?=
+COPT ?= 
 CPPFLAGS ?= -I./src/include
 LDFLAGS ?= -rdynamic -ldl $(CCFLAGS) -L$(BUILD_DIR) -Wl,-rpath,'$$ORIGIN'
 
@@ -19,21 +19,20 @@ STATIC_LIB = $(BUILD_DIR)/libconfig.a
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S),Darwin)
-    AR_CMD = libtool -static -o
+	AR_CMD = libtool -static -o
 else
-    AR_CMD = ar rcs
+	AR_CMD = ar rcs
 endif
 
-all: $(BUILD_DIR)/liblogger.so $(BUILD_DIR)/proxy $(GREETING_PLUGIN_DIR)/greeting.so $(STATIC_LIB)
+all: $(BUILD_DIR)/liblogger.so $(BUILD_DIR)/proxy $(GREETING_PLUGIN_DIR)/greeting.so $(STATIC_LIB) \
+	 $(BUILD_DIR)/libtime_wrapper.so $(BUILD_DIR)/libtime_syscall.so $(BUILD_DIR)/libtime_assembler.so \
+	 $(BUILD_DIR)/libtime.so $(BUILD_DIR)/debug_proxy
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(PLUGINS_DIR): | $(BUILD_DIR)
 	mkdir -p $(PLUGINS_DIR)
-
-$(GREETING_PLUGIN_DIR): | $(PLUGINS_DIR)
-	mkdir -p $(GREETING_PLUGIN_DIR)
 
 $(BUILD_DIR)/%.o: src/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -c $< -o $@
@@ -50,6 +49,26 @@ $(GREETING_PLUGIN_DIR)/greeting.so: plugins/greeting/greeting.c | $(GREETING_PLU
 
 $(BUILD_DIR)/liblogger.so: src/logger.c src/my_time.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $^ -o $@
+
+$(BUILD_DIR)/libtime_wrapper.so: src/my_time.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $^ -o $@
+
+$(BUILD_DIR)/libtime_syscall.so: src/my_time_syscall.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $^ -o $@
+
+$(BUILD_DIR)/libtime_assembler.so: src/my_time_asc.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $^ -o $@
+
+# $(BUILD_DIR)/libtime.so: src/my_time.c | $(BUILD_DIR)
+# 	$(CC) $(CFLAGS) $(COPT) $(CPPFLAGS) -fPIC -shared $^ -o $@
+
+$(BUILD_DIR)/libtime.so: $(BUILD_DIR)/libtime_wrapper.so | $(BUILD_DIR)
+	# cp install/libtime_wrapper.so install/libtime.so
+	ln -sf ./libtime_wrapper.so $(BUILD_DIR)/libtime.so
+
+$(BUILD_DIR)/debug_proxy: $(BUILD_DIR)/proxy
+	# cp install/proxy install/debug_proxy
+	ln -f $< $@
 
 clean:
 	rm -rf $(BUILD_DIR)
